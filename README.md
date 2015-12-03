@@ -12,6 +12,8 @@ A quarta rota (/listprod) e a quinta rota (/listsuper) , listam os produtos cada
 e os supermercados respectivamentes.
 A sexta rota (/resultado), mostra  uma tabela com : Data, Número do Item, Supermercado, Quantidade, Produtos, Preço Anterior e Preço Atual.
 A sétima (/autores) indica os autores do site e a oitava e ultima rota (/bye) é para finalizar e/ou trocar de usuário. 
+Para os administradores, terá uma rota (/admin), que terá acesso restrito para os usuários.
+
 
 Boa diversão !
 
