@@ -23,22 +23,28 @@ mkYesodDispatch "Sitio" pRoutes
 
 -- form esta defindo com 05 parametros - x = rota,  y=Text val = Text e retorna um widget (whamletFile é uma pagina) 
 -- gerador de formulario ctrl c e ctrl v
+
 getMenuR :: Handler Html
 getMenuR = defaultLayout [whamlet| <h1>
                    <body style="background-color:LavenderBlush">
                     <div class="divNmPagina"><center><b>Menu - Pesquisa de Preços
-                      <h4 style="color: DeepSkyBlue;"> Opções:<h5> <hr>
-                        <a href="ordem">
-                        <a href="supermercado">
-                        <a href="autor">
-                        <a href="listsuper" >
-                        <a href="bye">
-                           Cadastra Produtos <br> 
-                           Cadastra Pesquisa <br>
-                           Cadastra Supermercados <br>
-                           Lista os Autores <br>
-                           Lista de Resultado <br>
-                           Encerrrar<br>
+                      <h4 style="color: DeepSkyBlue;"> Opções:<h5> <hr> 
+                        <a  href="ordem"> <br>
+                           Cadastro de Pesquisa 
+                        <a href="prod"> <br>
+                          Cadastro de Produtos
+                        <a href="supermercado"> <br>
+                           Cadastro de Supermercado
+                         <a href="listprod"> <br>
+                           Lista de Produtos
+                        <a href="listsuper"> <br>
+                           Lista de Supermercados
+                        <a href="resultado"> <br>
+                           Resultado da Pesquisa 
+                        <a href="autor"> <br>
+                            Autores
+                        <a href="bye"> <br>
+                                  Sair 
 |]
 
 getAutorR :: Handler Html
@@ -62,6 +68,7 @@ formUsu :: Form Usuario
 formUsu = renderDivs $ Usuario <$>
     areq textField "Username" Nothing <*>
     areq textField "Pass" Nothing
+
 
 -- cadastro de formulario botao cadastrar
 getUsuarioR :: Handler Html
@@ -89,7 +96,8 @@ getWelcomeR = do
 
 -- inicio
 getLoginR :: Handler Html
-getLoginR = do
+getLoginR = do 
+
     (wid,enc) <- generateFormPost formUsu
     defaultLayout $ widgetForm LoginR enc wid "Entrar" "Login"
 
@@ -159,6 +167,88 @@ getListarProdutoR = do
                             <tr><td>Prc.Atual...:#{produtoPrecoAtual prod}
                  |]
 
+--inicio
+
+formOrdem :: Form Ordem
+formOrdem = renderDivs $ Ordem <$>
+             areq (selectField supers) "Supermercado:" Nothing <*>
+             areq (selectField prods)  "Escolha Prod.:" Nothing <*>
+             areq intField             "Qtde Produto:" Nothing <*>
+             lift (liftIO getCurrentTime) <*> -- dia atual do cadastro liftIO funçao monad valor fixo no formulario
+             lift (liftIO $ return False)
+
+prods = do
+       entidades <- runDB $ selectList [] [Asc ProdutoNome] 
+       optionsPairs $ fmap (\ent -> (produtoNome $ entityVal ent, entityKey ent)) entidades
+
+supers = do
+       entidades <- runDB $ selectList [] [Asc SupermercadoNome] 
+       optionsPairs $ fmap (\ent -> (supermercadoNome $ entityVal ent, entityKey ent)) entidades
+
+getOrdemR :: Handler Html
+getOrdemR = do
+           (widget, enctype) <- generateFormPost formOrdem
+           defaultLayout $ widgetForm1 OrdemR enctype widget "Pesquisa de preços."
+
+postOrdemR :: Handler Html
+postOrdemR = do
+            ((result,_),_) <- runFormPost formOrdem
+            case result of
+                FormSuccess x -> (runDB $ insert x) >> defaultLayout [whamlet|<h1> Pesquisa de preços inserida com sucessos!|]
+                _ -> redirect OrdemR
+--
+formProduto :: Form Produto
+formProduto = renderDivs $ Produto <$>
+             areq textField   "Nome do Produt" Nothing <*>
+             areq textField   "Descrição Prod." Nothing <*>
+             areq intField    "Quantidad Prod." Nothing <*>
+             areq doubleField "Preço Anterior." Nothing <*>
+             areq doubleField "Prco Pesquisado" Nothing
+
+formSuper :: Form Supermercado
+formSuper = renderDivs $ Supermercado <$>
+             areq textField "Nome do Supermercado..:" Nothing
+
+widgetForm1 :: Route Sitio -> Enctype -> Widget -> Text -> Widget
+widgetForm1 x enctype widget y = [whamlet|
+            <body style="background-color:LavenderBlush">
+            <h1 style="color: DeepSkyBlue;"> Cadastro: #{y}
+            
+            <form method=post action=@{x} enctype=#{enctype}>
+                ^{widget}
+                <input type="submit" value="Enter">
+|]
+getProdutoR :: Handler Html
+getProdutoR = do
+           (widget, enctype) <- generateFormPost formProduto
+           defaultLayout $ widgetForm1 ProdutoR enctype widget "Produto"
+
+postProdutoR :: Handler Html
+postProdutoR = do
+            ((result,_),_) <- runFormPost formProduto
+            case result of
+                FormSuccess prod -> (runDB $ insert prod) >> defaultLayout [whamlet|
+                <body style="background-color:LavenderBlush">
+                  <h1 style="color: DeepSkyBlue;"> Produto inserido|]
+                _ -> redirect ProdutoR
+
+getSuperR :: Handler Html
+getSuperR = do
+           (widget, enctype) <- generateFormPost formSuper
+           defaultLayout $ widgetForm1 SuperR enctype widget "Supermercado"
+
+postSuperR :: Handler Html
+postSuperR = do
+            ((result,_),_) <- runFormPost formSuper
+            case result of
+                FormSuccess super -> (runDB $ insert super) >> defaultLayout [whamlet|
+                <body style="background-color:LavenderBlush">
+                  <h1 style="color: DeepSkyBlue;"> Supermercado inserido|]
+                _ -> redirect SuperR
+
+
+
+--fim
 
 postLoginR :: Handler Html
 postLoginR = do
@@ -174,6 +264,8 @@ postLoginR = do
                     setMessage $ [shamlet| Invalid user |]
                     redirect LoginR 
         _ -> redirect LoginR
+
+                             
 -- linha 54 executa o formulario para pegar o post se bem sucedido retorna usuario. 
 -- pega só o primeiro select frist select from todos usuarios where nome o cara do form usr ==. igualdade do yesod perssist
 -- case usuario, entity pode ter ou não, coloca o nome e senha na session root, autenticado vem do banco de dados e redireciona para welcomeR

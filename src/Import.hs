@@ -21,15 +21,14 @@ pRoutes = [parseRoutes|
    /resultado ResultadoR GET
    /listprod ListarProdutoR GET
    /listsuper ListarSuperR GET
-
+   /ordem OrdemR GET POST
+  /prod ProdutoR GET POST
+  /supermercado SuperR GET POST
    
 |]
 
 pRoutes1 = [parseRoutes|
   / ListarOrdemR GET
-  /ordem OrdemR GET POST
-  /prod ProdutoR GET POST
-  /supermercado SuperR GET POST
   -- ROTAS não estao linkadas
 |]
 
