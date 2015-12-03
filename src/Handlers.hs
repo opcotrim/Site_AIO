@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes,
              TemplateHaskell #-}
- 
+
 module Handlers where
-    
+
 import Import
 import Yesod
 import Yesod.Static -- novo para imagens.
@@ -20,7 +20,9 @@ import Text.Hamlet
 import Database.Persist.Postgresql
 
 mkYesodDispatch "Sitio" pRoutes
--- form esta defindo com 05 parametros - x = rota,  y=Text val = Text e retorna um widget (whamletFile é uma pagina) gerador de formulario ctrl c e ctrl v
+
+-- form esta defindo com 05 parametros - x = rota,  y=Text val = Text e retorna um widget (whamletFile é uma pagina) 
+-- gerador de formulario ctrl c e ctrl v
 getMenuR :: Handler Html
 getMenuR = defaultLayout [whamlet| <h1>
                    <body style="background-color:LavenderBlush">
@@ -30,11 +32,13 @@ getMenuR = defaultLayout [whamlet| <h1>
                         <a href="supermercado">
                         <a href="autor">
                         <a href="listsuper" >
+                        <a href="bye">
                            Cadastra Produtos <br> 
                            Cadastra Pesquisa <br>
                            Cadastra Supermercados <br>
                            Lista os Autores <br>
                            Lista de Resultado <br>
+                           Encerrrar<br>
 |]
 
 getAutorR :: Handler Html
@@ -47,46 +51,47 @@ getAutorR = defaultLayout [whamlet|
 
 |]
 
-
-
 widgetForm :: Route Sitio -> Enctype -> Widget -> Text -> Text -> Widget
 widgetForm x enctype widget y val = do
      msg <- getMessage
      $(whamletFile "form.hamlet")
      toWidget $(luciusFile "teste.lucius")
-     
+
+-- tabelas sem validaçao, e a relaçao de 1 para 1
 formUsu :: Form Usuario
 formUsu = renderDivs $ Usuario <$>
     areq textField "Username" Nothing <*>
     areq textField "Pass" Nothing
 
--- sem validaçao, e relaçao de 1 para 1
-
+-- cadastro de formulario botao cadastrar
 getUsuarioR :: Handler Html
 getUsuarioR = do
     (wid,enc) <- generateFormPost formUsu
     defaultLayout $ widgetForm UsuarioR enc wid "Cadastro de Usuarios" "Cadastrar"
 
--- cadastro de formulario botao cadastrar
+-- pegar imagem - interpola na pasta empolgou
 getImgR :: Handler Html
 getImgR = defaultLayout [whamlet| 
     <img src=@{StaticR empolgou_jpg}> 
 |]
--- pegar imagem - interpola na pasta empolgou
+
+-- procurado a session  com  e retorna uma maybe text para tirar o just(so entra pessoas autenticadas autorizaçao minima)
 getWelcomeR :: Handler Html
 getWelcomeR = do
      usr <- lookupSession "_ID"
      defaultLayout [whamlet|
         $maybe m <- usr
-            <h1> Logado: #{m}
+            <h1>
+                <body style="background-color:LavenderBlush">
+                     <div class="divNmPagina"><center><b>Menu - Pesquisa de Preços
+                          <h4 style="color: DeepSkyBlue;"> Logado: #{m}
      |]
--- procurado a session  com  e retorna uma maybe text para tirar o just(so entra pessoas autenticadas autorizaçao minima)
+
+-- inicio
 getLoginR :: Handler Html
 getLoginR = do
     (wid,enc) <- generateFormPost formUsu
     defaultLayout $ widgetForm LoginR enc wid "Entrar" "Login"
-
--- inicio
 
 getCadastroR :: Handler Html
 getCadastroR = do
@@ -154,7 +159,6 @@ getListarProdutoR = do
                             <tr><td>Prc.Atual...:#{produtoPrecoAtual prod}
                  |]
 
--- Fim
 
 postLoginR :: Handler Html
 postLoginR = do
@@ -185,6 +189,7 @@ postCadastroR = do
             redirect CadastroR
         _ -> redirect CadastroR
 
+-- set messager é novo.
 postUsuarioR :: Handler Html
 postUsuarioR = do
     ((result,_),_) <- runFormPost formUsu
@@ -195,27 +200,35 @@ postUsuarioR = do
             redirect UsuarioR
         _ -> redirect UsuarioR
 
--- set messager é novo.
 
+-- listar
 getListUserR :: Handler Html
 getListUserR = do
     listaU <- runDB $ selectList [] [Asc UsuarioNome]
     defaultLayout $(whamletFile "list.hamlet")
--- listar
 
+--getby deleta a sessao
 getByeR :: Handler Html
 getByeR = do
     deleteSession "_ID"
-    defaultLayout [whamlet| Finalizado! |]    
---getby deleta a sessao
+    defaultLayout [whamlet| <h1>
+                            <body style="background-color:LavenderBlush">
+                                <div class="divNmPagina"><center><b>Menu - Pesquisa de Preços
+                                    <h3 style="color: DeepSkyBlue;"> Finalizado! |]
+-- finaliza
+
 
 getAdminR :: Handler Html
-getAdminR = defaultLayout [whamlet| <h1> Bem-vindo ADMIN!! |]
+getAdminR = defaultLayout [whamlet| <h1>
+                                    <body style="background-color:LavenderBlush">
+                                      <div class="divNmPagina"><center><b>Menu - Pesquisa de Preços
+                                        <h3 style="color: DeepSkyBlue;"> Bem-vindo! |]
 
 
 connStr = "dbname=d266oucgqg58dl host=ec2-107-21-224-11.compute-1.amazonaws.com user=fmtteyovbsxaip password=2henlXgzObUw18mREZh_TjF4rN port=5432"
 -- "dbname=dd9en8l5q4hh2a host=ec2-107-21-219-201.compute-1.amazonaws.com user=kpuwtbqndoeyqb password=aCROh525uugAWF1l7kahlNN3E0 port=5432"
 -- "dbname=d266oucgqg58dl host=ec2-107-21-224-11.compute-1.amazonaws.com user=fmtteyovbsxaip password=2henlXgzObUw18mREZh_TjF4rN port=5432"
+
 -- static e novo sitio tem dois parametros pool e s 
 main::IO()
 main = runStdoutLoggingT $ withPostgresqlPool connStr 10 $ \pool -> liftIO $ do 
