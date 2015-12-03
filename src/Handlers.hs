@@ -279,7 +279,7 @@ postCadastroR = do
             runDB $ insert usr
             setMessage $ [shamlet| <p> Cadastro inserido com sucesso! |]
             redirect CadastroR
-        _ -> redirect CadastroR
+        _ -> redirect MenuR
 
 -- set messager é novo.
 postUsuarioR :: Handler Html
@@ -289,8 +289,9 @@ postUsuarioR = do
         FormSuccess usr -> do
             runDB $ insert usr
             setMessage $ [shamlet| <p> Usuario inserido com sucesso! |]
+            
             redirect UsuarioR
-        _ -> redirect UsuarioR
+        _ -> redirect MenuR
 
 
 -- listar
