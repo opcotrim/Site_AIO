@@ -1,0 +1,3 @@
+<h1> Pessoas cadastradas:
+    $forall Entity pid user <- listaU
+        <p> #{usuarioNome user} <br>

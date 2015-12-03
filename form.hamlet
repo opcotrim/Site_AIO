@@ -1,0 +1,8 @@
+<h1>
+ <body bgcolor="#d0d0d0">
+    #{y}
+    $maybe mm <- msg
+        #{mm}
+    <form method=post action=@{x} enctype=#{enctype}>
+        ^{widget}
+        <input type="submit" value=#{val}>
